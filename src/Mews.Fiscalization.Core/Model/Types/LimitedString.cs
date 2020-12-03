@@ -2,10 +2,10 @@
 
 namespace Mews.Fiscalization.Core.Model
 {
-    public abstract class LimitedString : ValueWrapper<string, StringLimitation>
+    public abstract class LimitedString : ValueWrapper<string>
     {
         protected LimitedString(string value, StringLimitation limitation)
-            : base(value, limitation: limitation)
+            : base(value, limitation)
         {
         }
 

@@ -1,13 +1,33 @@
-﻿using System.Collections.Generic;
-
-namespace Mews.Fiscalization.Core.Model
+﻿namespace Mews.Fiscalization.Core.Model
 {
-    public class TaxpayerIdentificationNumber : LimitedString
+    public sealed class TaxpayerIdentificationNumberLimitation : ILimitation<(Country country, string value)>
     {
-        private static readonly StringLimitation Limitation = new StringLimitation(allowEmptyOrWhiteSpace: false);
+        public bool IsValid((Country country, string value) value)
+        {
+            if (value.country.IsNull())
+            {
+                return false;
+            }
+            if (value.country is EuropeanUnionCountry europeanCountry)
+            {
+                return new EuropeanTaxpayerIdentificationNumberLimitation().IsValid((europeanCountry, value.value));
+            }
+
+            return true;
+        }
+
+        public void CheckValidity((Country country, string value) value)
+        {
+            Check.IsNotNull(value.country, nameof(value.country));
+        }
+    }
+
+    public class TaxpayerIdentificationNumber : ValueWrapper<(Country, string)>
+    {
+        private static readonly TaxpayerIdentificationNumberLimitation Limitation = new TaxpayerIdentificationNumberLimitation();
 
         public TaxpayerIdentificationNumber(Country country, string taxpayerNumber)
-            : base(taxpayerNumber, Limitation)
+            : base((country, taxpayerNumber), Limitation)
         {
             Check.IsNotNull(country, nameof(country));
             Check.Condition(IsValid(country, taxpayerNumber), "Invalid taxpayer identification number.");
@@ -15,26 +35,7 @@ namespace Mews.Fiscalization.Core.Model
 
         public static bool IsValid(Country country, string taxpayerNumber)
         {
-            if (country.IsNull())
-            {
-                return false;
-            }
-            if (country is EuropeanUnionCountry europeanCountry)
-            {
-                return EuropeanUnionTaxpayerIdentificationNumber.IsValid(europeanCountry, taxpayerNumber);
-            }
-
-            return IsValid(taxpayerNumber);
-        }
-
-        public static bool IsValid(string taxpayerNumber)
-        {
-            return IsValid(taxpayerNumber, Limitation.ToEnumerable());
-        }
-
-        public new static bool IsValid(string taxpayerNumber, IEnumerable<StringLimitation> limitations)
-        {
-            return LimitedString.IsValid(taxpayerNumber, Limitation.Concat(limitations));
+            return IsValid((country, taxpayerNumber), Limitation.ToEnumerable());
         }
     }
 }

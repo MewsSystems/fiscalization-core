@@ -3,15 +3,14 @@ using System.Linq;
 
 namespace Mews.Fiscalization.Core.Model
 {
-    public abstract class ValueWrapper<T, TLimitation>
-        where TLimitation : class, ILimitation<T>
+    public abstract class ValueWrapper<T>
     {
-        protected ValueWrapper(T value, TLimitation limitation)
-            : this(value, limitation.ToEnumerable())
+        protected ValueWrapper(T value, params ILimitation<T>[] limitations)
+            : this(value, limitations.AsEnumerable())
         {
         }
 
-        protected ValueWrapper(T value, IEnumerable<TLimitation> limitations)
+        protected ValueWrapper(T value, IEnumerable<ILimitation<T>> limitations)
         {
             Value = value;
 
@@ -21,7 +20,7 @@ namespace Mews.Fiscalization.Core.Model
             }
         }
 
-        protected static bool IsValid(T value, IEnumerable<TLimitation> limitations)
+        protected static bool IsValid(T value, IEnumerable<ILimitation<T>> limitations)
         {
             return limitations.All(l => l.IsValid(value));
         }
@@ -37,7 +36,7 @@ namespace Mews.Fiscalization.Core.Model
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj is ValueWrapper<T, ILimitation<T>> other && Value.Equals(other.Value);
+            return obj is ValueWrapper<T> other && Value.Equals(other.Value);
         }
 
         public override int GetHashCode()
